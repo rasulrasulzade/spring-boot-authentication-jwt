@@ -14,9 +14,8 @@ import java.util.UUID;
 @Service
 public class UserService implements UserDetailsService {
 
-    private UserRepository userRepository;
-
-    private PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public UserService(UserRepository repository, PasswordEncoder passwordEncoder) {
         this.userRepository = repository;
