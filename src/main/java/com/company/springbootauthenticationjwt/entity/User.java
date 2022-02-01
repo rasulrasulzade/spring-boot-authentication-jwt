@@ -1,13 +1,14 @@
 package com.company.springbootauthenticationjwt.entity;
 
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.*;
-import java.util.Collection;
+import java.util.*;
 
 @Entity
-@Table(name="security_user")
+@Table(name = "security_user")
 public class User implements UserDetails {
     @Id
     private String id;
@@ -15,6 +16,12 @@ public class User implements UserDetails {
     private String surname;
     private String email;
     private String password;
+
+    @ManyToMany(fetch=FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinTable(name = "security_user_role",
+            joinColumns = @JoinColumn(name = "security_user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id"))
+    private List<Role> roles = new ArrayList<>();
 
     public String getId() {
         return id;
@@ -71,7 +78,11 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return null;
+        Set<SimpleGrantedAuthority> authorities = new HashSet<>();
+        getRoles().forEach(role ->
+                authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getName()))
+        );
+        return authorities;
     }
 
     public String getPassword() {
@@ -85,5 +96,13 @@ public class User implements UserDetails {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public List<Role> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(List<Role> roles) {
+        this.roles = roles;
     }
 }

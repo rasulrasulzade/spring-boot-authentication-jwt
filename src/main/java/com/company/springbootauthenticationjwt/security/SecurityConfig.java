@@ -62,6 +62,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 // Our public endpoints
                 .antMatchers("/public/**").permitAll()
                 // Our private endpoints
+                .antMatchers("/api/user").hasAnyRole("USER", "ADMIN")
+                .antMatchers("/api/admin").hasRole("ADMIN")
                 .anyRequest().authenticated();
 
         // Add JWT token filter

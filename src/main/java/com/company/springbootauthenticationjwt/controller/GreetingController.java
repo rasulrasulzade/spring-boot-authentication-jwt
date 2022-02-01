@@ -5,11 +5,21 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/rest")
+@RequestMapping("/api")
 public class GreetingController {
 
     @GetMapping("/hello")
     public String sayHello(){
         return "Hello World";
+    }
+
+    @GetMapping("/user")
+    public String sayHelloFromUser(){
+        return "Hello from User";
+    }
+
+    @GetMapping("/admin")
+    public String sayHelloFromAmin(){
+        return "Hello from Admin";
     }
 }
