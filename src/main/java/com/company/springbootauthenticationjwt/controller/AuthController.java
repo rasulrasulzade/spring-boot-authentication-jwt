@@ -44,7 +44,7 @@ public class AuthController {
 
         RegisterResponseModel responseModel = new RegisterResponseModel();
         responseModel.setId(user.getId());
-        responseModel.setJwt("Bearer " + jwtUtil.createToken(user.getEmail()));
+        responseModel.setJwt("Bearer " + jwtUtil.generateToken(user));
 
         return new ResponseEntity<>(responseModel, HttpStatus.CREATED);
     }
@@ -63,7 +63,7 @@ public class AuthController {
             responseModel.setSurname(user.getSurname());
 
             return ResponseEntity.ok()
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtUtil.createToken(user.getEmail()))
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtUtil.generateToken(user))
                     .body(responseModel);
 
         } catch (BadCredentialsException ex) {

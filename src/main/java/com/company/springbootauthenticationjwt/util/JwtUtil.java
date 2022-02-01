@@ -1,5 +1,6 @@
 package com.company.springbootauthenticationjwt.util;
 
+import com.company.springbootauthenticationjwt.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -36,9 +37,10 @@ public class JwtUtil {
         return  email.equals(userDetails.getUsername()) && !isTokenExpired(token);
     }
 
-    public String createToken(String email) {
+    public String generateToken(User user) {
         return Jwts.builder()
-                .claim("email", email)
+                .claim("email", user.getEmail())
+                .claim("roles", user.getAuthorities().toString())
                 .setExpiration(new Date(System.currentTimeMillis() + Long.parseLong(tokenExpTime)))
                 .signWith(SignatureAlgorithm.HS512, secret)
                 .compact();
