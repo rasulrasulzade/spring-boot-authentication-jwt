@@ -34,8 +34,6 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<RegisterResponseModel> register(@RequestBody RegisterRequestModel body) {
-//        TODO validate request payload
-
         if (userService.findByEmail(body.getEmail()) != null) {
             throw new RuntimeException(body.getEmail() + " is already taken!");
         }
