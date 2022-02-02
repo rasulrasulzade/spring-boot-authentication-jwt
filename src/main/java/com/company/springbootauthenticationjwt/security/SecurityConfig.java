@@ -14,18 +14,20 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
-import javax.servlet.http.HttpServletResponse;
-
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final UserDetailsService userDetailsService;
     private final AuthFilter authFilter;
+    private final AuthEntryPoint authEntryPoint;
+    private final AccessDeniedExceptionHandler accessDeniedExceptionHandler;
 
-    public SecurityConfig(UserDetailsService userService,  AuthFilter authFilter) {
+    public SecurityConfig(UserDetailsService userService, AuthFilter authFilter, AuthEntryPoint entryPoint, AccessDeniedExceptionHandler accessDeniedExceptionHandler) {
         this.userDetailsService = userService;
         this.authFilter = authFilter;
+        this.authEntryPoint = entryPoint;
+        this.accessDeniedExceptionHandler = accessDeniedExceptionHandler;
     }
 
     @Override
@@ -47,14 +49,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         // Set unauthorized requests exception handler
         http = http
                 .exceptionHandling()
-                .authenticationEntryPoint(
-                        (request, response, ex) -> {
-                            response.sendError(
-                                    HttpServletResponse.SC_UNAUTHORIZED,
-                                    ex.getMessage()
-                            );
-                        }
-                )
+                .authenticationEntryPoint(authEntryPoint)
+                .accessDeniedHandler(accessDeniedExceptionHandler)
                 .and();
 
         // Set permissions on endpoints
