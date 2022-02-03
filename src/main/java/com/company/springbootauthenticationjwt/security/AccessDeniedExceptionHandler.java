@@ -1,6 +1,6 @@
 package com.company.springbootauthenticationjwt.security;
 
-import com.company.springbootauthenticationjwt.util.ExceptionUtil;
+import com.company.springbootauthenticationjwt.util.HttpUtil;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
@@ -13,10 +13,10 @@ import java.util.HashMap;
 
 @Component
 public class AccessDeniedExceptionHandler implements AccessDeniedHandler {
-    private final ExceptionUtil exceptionUtil;
+    private final HttpUtil httpUtil;
 
-    public AccessDeniedExceptionHandler(ExceptionUtil exceptionUtil){
-        this.exceptionUtil = exceptionUtil;
+    public AccessDeniedExceptionHandler(HttpUtil exceptionUtil){
+        this.httpUtil = exceptionUtil;
     }
 
     @Override
@@ -25,7 +25,7 @@ public class AccessDeniedExceptionHandler implements AccessDeniedHandler {
         map.put("uri", request.getRequestURI());
         map.put("msg", accessDeniedException.getMessage() != null ? accessDeniedException.getMessage() : "ACCESS DENIED");
 
-        exceptionUtil.printException(response, map, HttpServletResponse.SC_FORBIDDEN);
+        httpUtil.printResponse(response, map, HttpServletResponse.SC_FORBIDDEN);
 
     }
 }

@@ -5,8 +5,8 @@ import com.company.springbootauthenticationjwt.exception.CustomException;
 import com.company.springbootauthenticationjwt.model.LoginRequestModel;
 import com.company.springbootauthenticationjwt.model.LoginResponseModel;
 import com.company.springbootauthenticationjwt.model.RegisterRequestModel;
-import com.company.springbootauthenticationjwt.model.RegisterResponseModel;
 import com.company.springbootauthenticationjwt.service.UserService;
+import com.company.springbootauthenticationjwt.util.HttpUtil;
 import com.company.springbootauthenticationjwt.util.JwtUtil;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -16,10 +16,13 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/public")
@@ -28,27 +31,40 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
+    private final HttpUtil httpUtil;
 
-    public AuthController(AuthenticationManager authManager, JwtUtil jwtUtil, UserService userService, PasswordEncoder passwordEncoder) {
+    public AuthController(AuthenticationManager authManager, JwtUtil jwtUtil, UserService userService, PasswordEncoder passwordEncoder,HttpUtil httpUtil) {
         this.authenticationManager = authManager;
         this.jwtUtil = jwtUtil;
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
+        this.httpUtil = httpUtil;
     }
 
     @PostMapping("/register")
-    public ResponseEntity<RegisterResponseModel> register(@RequestBody RegisterRequestModel body) {
+    public ResponseEntity<LoginResponseModel> register(@RequestBody RegisterRequestModel body) {
         if (userService.findByEmail(body.getEmail()) != null) {
             throw new CustomException(body.getEmail() + " is already taken!", HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         User user = userService.createUser(body);
 
-        RegisterResponseModel responseModel = new RegisterResponseModel();
+        LoginResponseModel responseModel = new LoginResponseModel();
         responseModel.setId(user.getId());
-        responseModel.setJwt("Bearer " + jwtUtil.generateToken(user));
+        responseModel.setEmail(user.getEmail());
+        responseModel.setName(user.getName());
+        responseModel.setSurname(user.getSurname());
 
-        return new ResponseEntity<>(responseModel, HttpStatus.CREATED);
+        HttpHeaders httpHeaders = new HttpHeaders();
+
+        Map<String,Object> map = new HashMap<>();
+        map.put("email", user.getEmail());
+        map.put("roles", user.getAuthorities());
+
+        httpHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer " + jwtUtil.generateAccessToken(map));
+        httpHeaders.add("X-refresh-token","Bearer " + jwtUtil.generateRefreshToken(map));
+
+        return new ResponseEntity<>(responseModel, httpHeaders, HttpStatus.CREATED);
     }
 
     @PostMapping("/login")
@@ -72,13 +88,32 @@ public class AuthController {
             responseModel.setName(user.getName());
             responseModel.setSurname(user.getSurname());
 
+            Map<String,Object> map = new HashMap<>();
+            map.put("email", user.getEmail());
+            map.put("roles", user.getAuthorities());
+
             return ResponseEntity.ok()
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtUtil.generateToken(user))
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtUtil.generateAccessToken(map))
+                    .header("X-refresh-token","Bearer " + jwtUtil.generateRefreshToken(map))
                     .body(responseModel);
 
         } catch (BadCredentialsException ex) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+    }
 
+    @GetMapping("/token/refresh")
+    public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String authorizationHeader = request.getHeader("X-refresh-token");
+        if(authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")){
+            throw new RuntimeException("No header token");
+        }
+
+        String refreshToken = authorizationHeader.split("Bearer ")[1];
+
+        Map<String,Object> map = jwtUtil.extractAllClaims(refreshToken);
+        response.setHeader(HttpHeaders.AUTHORIZATION, "Bearer " + jwtUtil.generateAccessToken(map));
+
+        httpUtil.printResponse(response, new HashMap<String, String>(), HttpServletResponse.SC_OK);
     }
 }

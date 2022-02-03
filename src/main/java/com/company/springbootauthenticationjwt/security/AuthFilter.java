@@ -40,12 +40,17 @@ public class AuthFilter extends OncePerRequestFilter {
 
 
         // Get JWT token and validate it
-        String token = authHeader.split(" ")[1].trim();
+        String accessToken = authHeader.split(" ")[1].trim();
+
+        if(jwtUtil.isTokenExpired(accessToken)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         // Get user identity
-        UserDetails userDetails = userRepository.findByEmail(jwtUtil.getEmail(token));
+        UserDetails userDetails = userRepository.findByEmail(jwtUtil.getEmail(accessToken));
 
-        if (!jwtUtil.validate(token, userDetails)) {
+        if (!jwtUtil.validate(accessToken, userDetails)) {
             filterChain.doFilter(request, response);
             return;
         }

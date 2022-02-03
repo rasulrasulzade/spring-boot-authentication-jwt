@@ -10,9 +10,9 @@ import java.io.PrintWriter;
 import java.util.Map;
 
 @Component
-public class ExceptionUtil {
+public class HttpUtil {
 
-    public void printException(HttpServletResponse response, Map<String, String> map, int status) throws IOException {
+    public void printResponse(HttpServletResponse response, Map<String, String> map, int status) throws IOException {
         response.setStatus(status);
         response.setCharacterEncoding("utf-8");
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
